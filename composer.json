@@ -1,0 +1,5 @@
+{
+    "require": {
+        "awcodes/filament-badgeable-column": "^3.0"
+    }
+}

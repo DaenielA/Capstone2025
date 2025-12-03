@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Contact Form Submission</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+        .header {
+            background: linear-gradient(90deg, #f59e0b 0%, #f97316 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .footer {
+            padding: 15px 20px;
+            background-color: #f3f4f6;
+            color: #6b7280;
+            text-align: center;
+            font-size: 14px;
+        }
+        .contact-info {
+            margin-bottom: 25px;
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .contact-info table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .contact-info td {
+            padding: 8px 5px;
+        }
+        .contact-info .label {
+            font-weight: 600;
+            color: #4b5563;
+            width: 30%;
+        }
+        .message-content {
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #f8fafc;
+            border-radius: 4px;
+            border-left: 4px solid #f59e0b;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(90deg, #f59e0b 0%, #f97316 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .timestamp {
+            font-size: 14px;
+            color: #6b7280;
+            font-style: italic;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>New Contact Form Submission</h1>
+        </div>
+        <div class="content">
+            <p>You have received a new message through the contact form on your website.</p>
+            
+            <div class="contact-info">
+                <table>
+                    <tr>
+                        <td class="label">Name:</td>
+                        <td>{{name}}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Email:</td>
+                        <td><a href="mailto:{{email}}">{{email}}</a></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Subject:</td>
+                        <td>{{subject}}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <h3>Message:</h3>
+            <div class="message-content">
+                <p>{{message}}</p>
+            </div>
+            
+            <center><a href="mailto:{{email}}?subject=RE: {{subject}}" class="button">Reply to {{name}}</a></center>
+            
+            <p class="timestamp">Submitted on: {{timestamp}}</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{currentYear}} Pandol. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html> 

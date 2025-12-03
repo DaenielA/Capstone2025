@@ -221,15 +221,26 @@ export class CreditRepository {
             (parseFloat(payment.Amount) * parseFloat(settings.LateFeePercentage)) / 100
           );
 
-          await db.insert(Credits).values({
-            MemberId: memberId,
-            Amount: lateFeeAmount.toFixed(2),
-            Type: 'Adjustment',
-            Notes: `Late fee for overdue payment ${payment.ScheduleId}`,
-            Timestamp: now,
-          });
+          // Wrap the late-fee insert and member balance synchronization in a
+          // single transaction so they succeed or fail together.
+          try {
+            await db.transaction(async (tx) => {
+              await tx.insert(Credits).values({
+                MemberId: memberId,
+                Amount: lateFeeAmount.toFixed(2),
+                Type: 'Adjustment',
+                Notes: `Late fee for overdue payment ${payment.ScheduleId}`,
+                Timestamp: now,
+              });
 
-          totalLateFees += lateFeeAmount;
+              // Synchronize using the same transaction to ensure consistency
+              await MemberRepository.synchronizeCreditBalance(memberId, tx);
+            });
+
+            totalLateFees += lateFeeAmount;
+          } catch (txErr) {
+            console.error(`Failed to apply late fee and sync balance for member ${memberId}:`, txErr);
+          }
         }
       }
 
@@ -570,7 +581,7 @@ export class CreditRepository {
       const now = new Date();
 
       // Find all 'Spent' credits that are linked to a product and are not yet fully paid
-      // and for which the CreditDueDays has passed.
+      // and for which the CreditDueDays has passed and penalty has not been applied yet.
       const overdueProductCredits = await db.select({
         creditId: Credits.CreditId,
         memberId: Credits.MemberId,
@@ -581,8 +592,8 @@ export class CreditRepository {
         productCreditDueDays: Products.CreditDueDays,
         productCreditPenaltyType: Products.CreditPenaltyType,
         productCreditPenaltyValue: Products.CreditPenaltyValue,
-        transactionTotalAmount: Transactions.TotalAmount,
-        // transactionMarkupAmount: Transactions.CreditMarkupAmount, // if needed for base calculation
+        isPenaltyApplied: Credits.IsPenaltyApplied, // Ensure this is selected
+        notes: Credits.Notes, // Ensure original notes are selected
       })
       .from(Credits)
       .innerJoin(Transactions, eq(Credits.RelatedTransactionId, Transactions.TransactionId))
@@ -591,12 +602,16 @@ export class CreditRepository {
       .where(and(
         eq(Credits.Type, 'Spent'),
         // Check if there's an outstanding balance on the credit
-        gt(Credits.Amount, Credits.PaidAmount ?? '0.00'), // Check if there's an outstanding balance on the credit
-        isNotNull(Products.CreditDueDays)
+        gt(Credits.Amount, Credits.PaidAmount ?? '0.00'),
+        isNotNull(Products.CreditDueDays),
+        eq(Credits.IsPenaltyApplied, false) // Only select credits where penalty has not been applied
       ));
+
+      console.log(`Found ${overdueProductCredits.length} overdue product credits that have not yet had penalties applied.`);
 
       for (const credit of overdueProductCredits) {
         if (!credit.productCreditDueDays || !credit.productCreditPenaltyType || !credit.productCreditPenaltyValue) {
+          console.log(`Skipping credit ${credit.creditId}: missing penalty settings.`);
           continue; // Skip if any penalty-related product settings are missing
         }
 
@@ -605,20 +620,10 @@ export class CreditRepository {
         const penaltyDueDate = new Date(transactionTimestamp);
         penaltyDueDate.setDate(transactionTimestamp.getDate() + credit.productCreditDueDays);
 
+        console.log(`Credit ${credit.creditId}: Due Date calculated to be ${penaltyDueDate.toISOString()}. Current time: ${now.toISOString()}`);
+
         // Only apply if the penalty due date has passed
         if (now > penaltyDueDate) {
-          // Check if a penalty for this credit has already been applied to prevent duplicates
-          // A penalty for the same original credit (RelatedTransactionId) and type 'Adjustment'
-          const existingPenalty = await db.select()
-            .from(Credits)
-            .where(and(
-              eq(Credits.RelatedTransactionId, credit.creditId), // Link to the original 'Spent' credit record
-              eq(Credits.Type, 'Adjustment'),
-              // You might want a more specific note or a 'Subtype' for product penalties
-              eq(Credits.Notes, `Product credit penalty for credit ${credit.creditId}`)
-            ));
-
-          if (existingPenalty.length === 0) {
             let penaltyAmount = 0;
             // The outstanding amount for this specific credit transaction item
             const outstandingAmount = parseFloat(credit.creditAmount) - parseFloat(credit.creditPaidAmount || '0');
@@ -631,28 +636,118 @@ export class CreditRepository {
 
             if (penaltyAmount > 0) {
               await db.transaction(async (tx) => {
-                // Insert the penalty as an adjustment credit
-                await tx.insert(Credits).values({
-                  MemberId: credit.memberId,
-                  Amount: penaltyAmount.toFixed(2),
-                  Type: 'Adjustment',
-                  Notes: `Product credit penalty for credit ${credit.creditId}`,
-                  Timestamp: now,
-                  RelatedTransactionId: credit.creditId, // Link to the original 'Spent' credit record
-                }).returning();
+                const newCreditAmount = (parseFloat(credit.creditAmount) + penaltyAmount);
+                const newNotes = credit.notes ? `${credit.notes} (Penalty Applied: +₱${penaltyAmount.toFixed(2)})` : `Penalty Applied: +₱${penaltyAmount.toFixed(2)}`;
+
+                console.log(`Applying penalty to credit ${credit.creditId}: Old Amount=${credit.creditAmount}, Penalty=${penaltyAmount.toFixed(2)}, New Amount=${newCreditAmount.toFixed(2)}`);
+
+                await tx.update(Credits)
+                  .set({
+                    Amount: newCreditAmount.toFixed(2),
+                    IsPenaltyApplied: true,
+                    Notes: newNotes,
+                    UpdatedAt: now,
+                  })
+                  .where(eq(Credits.CreditId, credit.creditId));
 
                 // Update member's total credit balance
-                // Assuming MemberRepository.synchronizeCreditBalance can be called static or instantiated
                 await MemberRepository.synchronizeCreditBalance(credit.memberId, tx);
-                console.log(`Applied penalty of ${penaltyAmount.toFixed(2)} to member ${credit.memberId} for credit ${credit.creditId}`);
+                console.log(`Penalty applied and member balance synchronized for credit ${credit.creditId}.`);
               });
+            } else {
+              console.log(`Penalty amount for credit ${credit.creditId} is 0 or less, skipping update.`);
             }
-          }
+        } else {
+          console.log(`Credit ${credit.creditId}: Penalty due date has not yet passed.`);
         }
       }
       console.log('Finished applyProductCreditPenalties.');
     } catch (error) {
       console.error('Error in applyProductCreditPenalties:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Apply penalty for a single credit item (product-linked) if due.
+   * This is useful for an API endpoint or for client-triggered testing.
+   * @param creditId - the CreditId to check and apply penalty for
+   * @param options.now - optional Date or ISO string representing current time (used for client-driven tests)
+   * @param options.force - if true, bypass due-date check and apply regardless
+   */
+  static async applyPenaltyToCredit(creditId: number, options?: { now?: Date | string; force?: boolean }) {
+    try {
+      const now = options?.now ? new Date(options.now) : new Date();
+
+      const creditRows = await db.select({
+        creditId: Credits.CreditId,
+        memberId: Credits.MemberId,
+        creditAmount: Credits.Amount,
+        creditPaidAmount: Credits.PaidAmount,
+        creditTimestamp: Credits.Timestamp,
+        productId: TransactionItems.ProductId,
+        productCreditDueDays: Products.CreditDueDays,
+        productCreditPenaltyType: Products.CreditPenaltyType,
+        productCreditPenaltyValue: Products.CreditPenaltyValue,
+        isPenaltyApplied: Credits.IsPenaltyApplied,
+        notes: Credits.Notes,
+      })
+      .from(Credits)
+      .innerJoin(Transactions, eq(Credits.RelatedTransactionId, Transactions.TransactionId))
+      .innerJoin(TransactionItems, eq(Transactions.TransactionId, TransactionItems.TransactionId))
+      .innerJoin(Products, eq(TransactionItems.ProductId, Products.ProductId))
+      .where(and(eq(Credits.CreditId, creditId)));
+
+      if (!creditRows.length) {
+        return { applied: false, reason: 'credit_not_found' };
+      }
+
+      const credit = creditRows[0];
+      if (credit.isPenaltyApplied) {
+        return { applied: false, reason: 'already_applied' };
+      }
+
+      if (!credit.productCreditDueDays || !credit.productCreditPenaltyType || !credit.productCreditPenaltyValue) {
+        return { applied: false, reason: 'missing_product_penalty_settings' };
+      }
+
+      const transactionTimestamp = new Date(credit.creditTimestamp);
+      const penaltyDueDate = new Date(transactionTimestamp);
+      penaltyDueDate.setDate(transactionTimestamp.getDate() + credit.productCreditDueDays);
+
+      if (!options?.force && now <= penaltyDueDate) {
+        return { applied: false, reason: 'not_due_yet', penaltyDueDate: penaltyDueDate.toISOString(), now: now.toISOString() };
+      }
+
+      const outstandingAmount = parseFloat(credit.creditAmount) - parseFloat(credit.creditPaidAmount || '0');
+      let penaltyAmount = 0;
+      if (credit.productCreditPenaltyType === 'percentage') {
+        penaltyAmount = (outstandingAmount * parseFloat(credit.productCreditPenaltyValue)) / 100;
+      } else if (credit.productCreditPenaltyType === 'fixed') {
+        penaltyAmount = parseFloat(credit.productCreditPenaltyValue);
+      }
+
+      if (penaltyAmount <= 0) {
+        return { applied: false, reason: 'penalty_zero' };
+      }
+
+      await db.transaction(async (tx) => {
+        const newCreditAmount = (parseFloat(credit.creditAmount) + penaltyAmount);
+        const newNotes = credit.notes ? `${credit.notes} (Penalty Applied: +₱${penaltyAmount.toFixed(2)})` : `Penalty Applied: +₱${penaltyAmount.toFixed(2)}`;
+
+        await tx.update(Credits).set({
+          Amount: newCreditAmount.toFixed(2),
+          IsPenaltyApplied: true,
+          Notes: newNotes,
+          UpdatedAt: new Date(),
+        }).where(eq(Credits.CreditId, creditId));
+
+        await MemberRepository.synchronizeCreditBalance(credit.memberId, tx);
+      });
+
+      return { applied: true, penaltyAmount };
+    } catch (error) {
+      console.error(`Error applying penalty to credit ${creditId}:`, error);
       throw error;
     }
   }

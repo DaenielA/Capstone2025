@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Pandol</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+        .header {
+            background: linear-gradient(90deg, #f59e0b 0%, #f97316 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .welcome-message {
+            font-size: 18px;
+            color: #4b5563;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(90deg, #f59e0b 0%, #f97316 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .footer {
+            padding: 15px 20px;
+            background-color: #f3f4f6;
+            color: #6b7280;
+            text-align: center;
+            font-size: 14px;
+        }
+        .role-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #fef3c7;
+            color: #92400e;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .divider {
+            height: 1px;
+            background-color: #e5e7eb;
+            margin: 25px 0;
+        }
+        .help-section {
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .help-section h3 {
+            margin-top: 0;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to Pandol!</h1>
+        </div>
+        <div class="content">
+            <p class="welcome-message">Hello <strong>{{userName}}</strong>,</p>
+            
+            <p>Welcome to Pandol! We're excited to have you on board as a <span class="role-badge">{{role}}</span></p>
+            
+            <p>Your account has been successfully created, and you're ready to start using our system.</p>
+            
+            <p>Get started by logging into your account:</p>
+            
+            <center><a href="{{loginUrl}}" class="button">Login to Your Account</a></center>
+            
+            <div class="divider"></div>
+            
+            <div class="help-section">
+                <h3>Need Help?</h3>
+                <p>If you have any questions or need assistance, please don't hesitate to contact our support team. We're here to help!</p>
+                <p>Thank you for choosing Pandol.</p>
+            </div>
+        </div>
+        <div class="footer">
+            <p>&copy; {{currentYear}} Pandol. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html> 

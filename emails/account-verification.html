@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Pandol Account</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      text-align: center;
+      padding: 20px 0;
+      border-bottom: 1px solid #eaeaea;
+    }
+    .logo {
+      max-width: 150px;
+      height: auto;
+    }
+    .content {
+      padding: 30px 20px;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: #666;
+      border-top: 1px solid #eaeaea;
+    }
+    h1 {
+      color: #f59e0b;
+      margin-top: 0;
+    }
+    .button {
+      display: inline-block;
+      background-color: #f59e0b;
+      color: white;
+      text-decoration: none;
+      padding: 12px 30px;
+      border-radius: 4px;
+      margin: 20px 0;
+      font-weight: 600;
+    }
+    .button:hover {
+      background-color: #d97706;
+    }
+    .verification-code {
+      background-color: #f3f4f6;
+      padding: 12px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 18px;
+      text-align: center;
+      letter-spacing: 2px;
+      margin: 20px 0;
+    }
+    .note {
+      font-size: 14px;
+      color: #666;
+      font-style: italic;
+    }
+    .help {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px dashed #eaeaea;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://pandol.vercel.app/logo.png" alt="Pandol Logo" class="logo">
+    </div>
+    <div class="content">
+      <h1>Verify Your Account</h1>
+      <p>Hello {{memberName}},</p>
+      <p>Welcome to Pandol! Your member account has been created, and we're excited to have you join our community.</p>
+      <p>To complete your registration and access your account, please click the button below:</p>
+      
+      <div style="text-align: center;">
+        <a href="{{verificationUrl}}" class="button">Verify My Account</a>
+      </div>
+      
+      <p>If the button above doesn't work, you can copy and paste the following link into your browser:</p>
+      <p style="word-break: break-all;"><a href="{{verificationUrl}}">{{verificationUrl}}</a></p>
+      
+      <div class="help">
+        <p><strong>Need help?</strong></p>
+        <p>If you have any questions or need assistance, please contact our support team or reply to this email.</p>
+      </div>
+    </div>
+    <div class="footer">
+      <p>&copy; {{currentYear}} Pandol. All rights reserved.</p>
+      <p>This email was sent to you because a member account was created for you at Pandol.</p>
+    </div>
+  </div>
+</body>
+</html> 

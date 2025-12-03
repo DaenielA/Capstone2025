@@ -1,0 +1,1 @@
+ALTER TABLE "Credits" ADD COLUMN "IsPenaltyApplied" boolean DEFAULT false NOT NULL;

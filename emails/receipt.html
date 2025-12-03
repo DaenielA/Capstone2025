@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Purchase Receipt</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+        .header {
+            background: linear-gradient(90deg, #f59e0b 0%, #f97316 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .greeting {
+            font-size: 18px;
+            color: #4b5563;
+            margin-bottom: 20px;
+        }
+        .footer {
+            padding: 15px 20px;
+            background-color: #f3f4f6;
+            color: #6b7280;
+            text-align: center;
+            font-size: 14px;
+        }
+        .receipt-details {
+            margin-bottom: 25px;
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .receipt-details table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .receipt-details td {
+            padding: 8px 5px;
+        }
+        .receipt-details .label {
+            font-weight: 600;
+            color: #4b5563;
+            width: 40%;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .items-table th {
+            background-color: #f8fafc;
+            color: #4b5563;
+            font-weight: 600;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .items-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .items-table .item-name {
+            width: 50%;
+        }
+        .items-table .text-right {
+            text-align: right;
+        }
+        .totals {
+            margin-top: 20px;
+            margin-left: auto;
+            width: 60%;
+        }
+        .totals table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .totals td {
+            padding: 8px 5px;
+        }
+        .totals .label {
+            font-weight: 500;
+            text-align: right;
+            color: #6b7280;
+        }
+        .totals .amount {
+            text-align: right;
+            font-weight: 500;
+        }
+        .totals .grand-total {
+            font-weight: 700;
+            font-size: 16px;
+            color: #1f2937;
+            border-top: 2px solid #e5e7eb;
+            padding-top: 10px;
+        }
+        .message-box {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #f0fdf4;
+            color: #16a34a;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .store-info {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Receipt for Your Purchase</h1>
+        </div>
+        <div class="content">
+            <p class="greeting">Hello <strong>{{customerName}}</strong>,</p>
+            
+            <p>Thank you for your purchase! Please find your receipt details below:</p>
+            
+            <div class="receipt-details">
+                <table>
+                    <tr>
+                        <td class="label">Transaction ID:</td>
+                        <td>#{{transactionId}}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Date:</td>
+                        <td>{{date}}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Payment Method:</td>
+                        <td>{{paymentMethod}}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Cashier:</td>
+                        <td>{{cashier}}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th class="item-name">Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th class="text-right">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each items}}
+                    <tr>
+                        <td>{{name}}</td>
+                        <td>{{quantity}}</td>
+                        <td>${{price}}</td>
+                        <td class="text-right">${{subtotal}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+            
+            <div class="totals">
+                <table>
+                    <tr>
+                        <td class="label">Subtotal:</td>
+                        <td class="amount">${{subtotal}}</td>
+                    </tr>
+                    {{#if tax}}
+                    <tr>
+                        <td class="label">Tax:</td>
+                        <td class="amount">${{tax}}</td>
+                    </tr>
+                    {{/if}}
+                    {{#if discount}}
+                    <tr>
+                        <td class="label">Discount:</td>
+                        <td class="amount">-${{discount}}</td>
+                    </tr>
+                    {{/if}}
+                    <tr>
+                        <td class="label grand-total">Total:</td>
+                        <td class="amount grand-total">${{total}}</td>
+                    </tr>
+                    {{#if amountReceived}}
+                    <tr>
+                        <td class="label">Amount Received:</td>
+                        <td class="amount">${{amountReceived}}</td>
+                    </tr>
+                    {{/if}}
+                    {{#if change}}
+                    <tr>
+                        <td class="label">Change:</td>
+                        <td class="amount">${{change}}</td>
+                    </tr>
+                    {{/if}}
+                </table>
+            </div>
+            
+            <div class="message-box">
+                <p><strong>Thank you for your business!</strong></p>
+                <p>We appreciate your support and look forward to serving you again soon.</p>
+            </div>
+            
+            <div class="store-info">
+                {{#if storeName}}<p><strong>{{storeName}}</strong></p>{{/if}}
+                {{#if storeAddress}}<p>{{storeAddress}}</p>{{/if}}
+                {{#if storePhone}}<p>Phone: {{storePhone}}</p>{{/if}}
+            </div>
+        </div>
+        <div class="footer">
+            <p>&copy; {{currentYear}} Pandol. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html> 

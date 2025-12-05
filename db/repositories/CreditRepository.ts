@@ -592,7 +592,7 @@ export class CreditRepository {
         eq(Credits.Type, 'Spent'),
         // Check if there's an outstanding balance on the credit
         gt(Credits.Amount, Credits.PaidAmount ?? '0.00'), // Check if there's an outstanding balance on the credit
-        Products.CreditDueDays.notNull()
+        Products.CreditDueDays.notNull
       ));
 
       for (const credit of overdueProductCredits) {

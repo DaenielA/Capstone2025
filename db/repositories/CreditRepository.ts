@@ -1,6 +1,6 @@
 import { db } from '../connection';
 import { Credits, Members, CreditSettings, PaymentSchedule, Transactions, TransactionItems, Products } from '../schema';
-import { eq, and, gte, lte, desc, asc, inArray, gt } from 'drizzle-orm';
+import { eq, and, gte, lte, desc, asc, inArray, gt, isNotNull } from 'drizzle-orm';
 import { MemberRepository } from './MemberRepository';
 
 /**
@@ -592,7 +592,7 @@ export class CreditRepository {
         eq(Credits.Type, 'Spent'),
         // Check if there's an outstanding balance on the credit
         gt(Credits.Amount, Credits.PaidAmount ?? '0.00'), // Check if there's an outstanding balance on the credit
-        Products.CreditDueDays.notNull
+        isNotNull(Products.CreditDueDays)
       ));
 
       for (const credit of overdueProductCredits) {
